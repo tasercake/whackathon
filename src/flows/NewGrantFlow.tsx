@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Modal } from '../components/Modal';
 import { Arrow } from '../components/art';
 import { uid, useStore } from '../store/store';
+import { weekStart } from '../lib/week';
 import type { Grant, Level } from '../types';
 
 const MAX_ALLOWANCE = 7;
@@ -29,6 +30,7 @@ export function NewGrantFlow({ onClose }: { onClose: () => void }) {
       ceiling: cap as Level,
       allowance,
       used: 0,
+      usedWeek: weekStart(Date.now()),
       paused: false,
       createdAt: Date.now(),
     };

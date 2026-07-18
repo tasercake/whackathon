@@ -8,10 +8,11 @@ import {
 } from 'react';
 import type { AppState, Goal, Grant, Level, ShockRecord } from '../types';
 import { MAX_LEVEL } from '../types';
+import { weekStart } from '../lib/week';
 
 const STORAGE_KEY = 'buzz.state.v1';
 
-const seed: AppState = {
+export const seed: AppState = {
   settings: { intensityCap: 3 },
   goals: [],
   grants: [],
@@ -26,7 +27,13 @@ function load(): AppState {
     return {
       settings: { ...seed.settings, ...parsed.settings },
       goals: parsed.goals ?? [],
-      grants: parsed.grants ?? [],
+      // Grants written before `usedWeek` existed get the week they were
+      // created in. If that's in the past their counter reads as spent-and-
+      // rolled-over, which is the forgiving direction to guess wrong in.
+      grants: (parsed.grants ?? []).map((g) => ({
+        ...g,
+        usedWeek: g.usedWeek ?? weekStart(g.createdAt),
+      })),
       shocks: parsed.shocks ?? [],
     };
   } catch {
@@ -53,7 +60,7 @@ type Action =
   | { type: 'disputeShock'; id: string }
   | { type: 'reset' };
 
-function reducer(state: AppState, action: Action): AppState {
+export function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case 'setCap': {
       const cap = clampToCap(action.cap, MAX_LEVEL as Level);
@@ -87,14 +94,29 @@ function reducer(state: AppState, action: Action): AppState {
           g.id === action.id ? { ...g, paused: !g.paused } : g,
         ),
       };
-    case 'recordShock':
+    case 'recordShock': {
+      // The week is taken from the shock, not from the clock, so the reducer
+      // stays pure and a zap always counts against the week it landed in.
+      const week = weekStart(action.shock.at);
       return {
         ...state,
         shocks: [action.shock, ...state.shocks],
         grants: state.grants.map((g) =>
-          g.id === action.shock.grantId ? { ...g, used: g.used + 1 } : g,
+          g.id === action.shock.grantId
+            ? {
+                ...g,
+                // A counter left over from an earlier week has rolled over —
+                // this zap is the first charge of the new one. Clamped at the
+                // allowance so the counter can never read "3 of 2", whatever
+                // the caller does: the UI's disabled button is a courtesy, and
+                // an inbound zap off a real transport never passed it at all.
+                used: Math.min(g.allowance, (g.usedWeek === week ? g.used : 0) + 1),
+                usedWeek: week,
+              }
+            : g,
         ),
       };
+    }
     case 'disputeShock':
       return {
         ...state,

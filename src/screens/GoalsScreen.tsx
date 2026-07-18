@@ -23,9 +23,11 @@ function daysLive(goal: Goal): number {
 export function GoalsScreen({
   onNewGoal,
   onEditPermissions,
+  onDeleteGoal,
 }: {
   onNewGoal: () => void;
   onEditPermissions: () => void;
+  onDeleteGoal: (g: Goal) => void;
 }) {
   const { state } = useStore();
   const { goals, grants } = state;
@@ -90,8 +92,18 @@ export function GoalsScreen({
               {/* The only number we honestly have until the band reports in. */}
               <div className="card__figure">Day {daysLive(goal)}</div>
               <div className="card__foot">{TRACKER_NOTE[goal.tracker]}</div>
-              <div className="card__foot" style={{ marginTop: 'auto' }}>
+              <div className="card__foot">
                 {TRIGGER_NOTE[goal.trigger]} Ceiling: {LEVEL_WORDS[goal.ceiling]}.
+              </div>
+              {/* The confirmation modal promises the goal can go any time. This
+                  is where that happens. Edit is still unbuilt. */}
+              <div className="card__actions">
+                <button
+                  className="btn btn--hairline btn--sm"
+                  onClick={() => onDeleteGoal(goal)}
+                >
+                  Delete
+                </button>
               </div>
             </article>
           ))}
