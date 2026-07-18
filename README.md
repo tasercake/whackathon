@@ -52,3 +52,16 @@ revoke copy uses they/them rather than guessing from a name.
 
 `Stats` is a nav destination only. Goal edit/delete and zap dispute exist in the data
 model but have no UI yet — both were out of scope for the two designed flows.
+
+## Hardware
+
+Merged in from `origin/main`. The frontend above and this tree are two halves of the
+same project; they had separate git histories until now.
+
+| Path | What |
+| --- | --- |
+| `hardware/client/` | PlatformIO / Arduino firmware (`src/main.cpp`). Flash with `upload.sh`. |
+| `hardware/server/` | Bun edge server that relays shock commands to the device. |
+
+`src/services/shockService.ts` is still the stub boundary on the frontend side — wiring
+it to `hardware/server` is the obvious next step, but nothing does it yet.
