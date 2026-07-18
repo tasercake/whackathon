@@ -1,0 +1,42 @@
+/* Extracted from the Paper file "Scratchpad", page 1 — 04a / 04b artboards.
+   Values are literals in the design; this is the single place they live in code. */
+
+:root {
+  /* Ground & ink */
+  --ground: #ffffff;
+  --ink: #111111;
+  --ink-scrim: #1111118c;
+
+  /* Chrome yellow — the one intense color moment */
+  --chrome: #f5c518;
+
+  /* Surfaces */
+  --card: #f6f6f4;
+  --rule: #e4e4e0;
+  --inactive: #ededea;
+  --inactive-fill: #ededea;
+
+  /* Text */
+  --muted: #5a5a5a;
+  --muted-2: #6b6b6b;
+  --muted-3: #4a4a4a;
+  --disabled: #8a8a85;
+  --hairline: #c9c9c4;
+
+  /* Semantic (bedtime card only) */
+  --ok-bg: #dff0e4;
+  --ok-ink: #3a7d4f;
+
+  /* Type */
+  --font: system-ui, sans-serif;
+  --tracking-display: -0.042em;
+  --tracking-number: -0.035em;
+  --tracking-label: 0.04em;
+
+  /* Radii */
+  --r-card: 20px;
+  --r-modal: 28px;
+  --r-field: 14px;
+  --r-tile: 16px;
+  --r-pill: 999px;
+}
