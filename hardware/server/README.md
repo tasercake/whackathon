@@ -55,4 +55,4 @@ Closed management connections reconnect after two seconds. `SIGINT` and `SIGTERM
 
 ## ACK limitation
 
-A successful result means only that the serial write Promise resolved. Arduino sends no ACK, so success does **not** prove physical execution (or LED/shock activation).
+A successful result means only that the serial write Promise resolved. Arduino emits `ACK DO_SHOCK`, but the edge server does not consume it yet, so success does **not** prove physical execution (or LED/shock activation).

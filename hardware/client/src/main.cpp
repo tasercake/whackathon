@@ -103,6 +103,7 @@ void processLine() {
   uint16_t duration;
   bool buzzOn;
   if (parseCommand(inputBuffer, intensity, duration, buzzOn)) {
+    Serial.println(F("ACK DO_SHOCK"));
     performShock(intensity, duration, buzzOn);
   }
 }
