@@ -35,7 +35,7 @@ DO_SHOCK 0.750 500 1
 - `duration_ms`: integer from `1` through `10000`
 - `buzz_on`: exactly `0` or `1`
 
-Malformed, overflowing, out-of-range, overlong, or trailing-field lines are silently rejected. Firmware sends no ACK or response. An overlong line is discarded in full through its newline. Effect timing is intentionally blocking; commands received by USB hardware during an effect remain serial-buffered and are processed afterward, subject to the Uno serial buffer's capacity.
+Malformed, overflowing, out-of-range, overlong, or trailing-field lines are silently rejected. For each valid command, firmware immediately responds with `ACK DO_SHOCK\n` before running the effect. An overlong line is discarded in full through its newline. Effect timing is intentionally blocking; commands received by USB hardware during an effect remain serial-buffered and are processed afterward, subject to the Uno serial buffer's capacity.
 
 A valid command lights all LEDs red at brightness `round(intensity * 255)`, optionally starts the buzzer, waits for the duration, then turns LEDs and buzzer off.
 
@@ -56,7 +56,7 @@ Example override:
 build_flags = -DNUM_LEDS=16 -DLED_DATA_PIN=6 -DBUZZER_PIN=9 -DBUZZER_FREQUENCY=2500
 ```
 
-FastLED uses `WS2812B` with `GRB` color order. Dependency is pinned to FastLED 3.10.4 in `platformio.ini`; buzzer control uses Arduino `tone()` / `noTone()`.
+FastLED uses `WS2812B` with `GRB` color order. Dependency is pinned to FastLED 3.10.3 in `platformio.ini`; buzzer control uses Arduino `tone()` / `noTone()`.
 
 ## Build, upload, monitor
 
