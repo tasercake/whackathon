@@ -133,3 +133,6 @@ dist-ssr
 
 # Playwright MCP scratch output
 .playwright-mcp/
+
+# Screenshot scratch output (repo root only — src/assets stays tracked)
+/*.png
