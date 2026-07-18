@@ -6,6 +6,7 @@ localStorage; the shock calls are stubbed.
 ```bash
 npm install
 npm run dev
+npm test      # reducer tests — the product invariants below
 ```
 
 ## Where things are
@@ -13,7 +14,8 @@ npm run dev
 | Path | What |
 | --- | --- |
 | `src/services/shockService.ts` | **The network boundary.** `sendShock` / `receiveShock` are the only functions that would ever talk to a device or server. |
-| `src/store/store.tsx` | Reducer + localStorage persistence (`buzz.state.v1`). |
+| `src/store/store.tsx` | Reducer + localStorage persistence (`buzz.state.v1`). Tests in `store.test.ts`. |
+| `src/lib/week.ts` | Allowance weeks. `used` is only meaningful with `usedWeek` — read it through `chargesUsed`. |
 | `src/styles/tokens.css` | Design values from the Paper file, as CSS variables. |
 | `src/flows/` | The two multi-step flows and the revoke dialog. |
 | `src/screens/` | Goals and Crew. |
@@ -42,6 +44,10 @@ These are product invariants, not copy. Don't implement them away.
   no tombstone — the grant is removed outright.
 - **Every peer-sent shock is signed and disputable.** `ShockRecord` carries the
   signature returned by the service and a `disputed` flag.
+- **A grant's allowance is per week, and it comes back.** Charges reset Monday at
+  local midnight. The counter is clamped at the allowance in the reducer, not just
+  by a disabled button — an inbound zap off a real transport never sees the UI.
+  A zap that couldn't be charged still keeps its signed record.
 - **The marketplace/buyer side inverts all of this.** It is deliberately absent from
   these light-mode flows. Keep it out.
 
@@ -50,8 +56,16 @@ revoke copy uses they/them rather than guessing from a name.
 
 ## Not built
 
-`Stats` is a nav destination only. Goal edit/delete and zap dispute exist in the data
-model but have no UI yet — both were out of scope for the two designed flows.
+`Stats` is a nav destination only. Goal **edit** and zap **dispute** are still reducer
+actions with no UI. The crew footnote deliberately promises only that zaps are signed,
+not that you can dispute them — there is no inbox to dispute from yet. Restore the
+other half of that sentence when there is one.
+
+Goal delete is built (card action → confirmation dialog).
+
+There is no real send path. The crew row's dashed **Zap** button is dev-only
+(`import.meta.env.DEV`) and exists to exercise `sendShock` → `ShockRecord` → the
+`used` counter without a device; it is not part of either designed flow.
 
 ## Hardware
 

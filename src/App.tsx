@@ -5,16 +5,18 @@ import { CrewScreen } from './screens/CrewScreen';
 import { NewGoalFlow } from './flows/NewGoalFlow';
 import { NewGrantFlow } from './flows/NewGrantFlow';
 import { RevokeDialog } from './flows/RevokeDialog';
+import { DeleteGoalDialog } from './flows/DeleteGoalDialog';
 import { StoreProvider, uid, useStore } from './store/store';
 import { receiveShock } from './services/shockService';
-import type { Grant } from './types';
+import type { Goal, Grant } from './types';
 import './styles/app.css';
 
 type Overlay =
   | { kind: 'none' }
   | { kind: 'newGoal' }
   | { kind: 'newGrant' }
-  | { kind: 'revoke'; grant: Grant };
+  | { kind: 'revoke'; grant: Grant }
+  | { kind: 'deleteGoal'; goal: Goal };
 
 function Shell() {
   const [tab, setTab] = useState<Tab>('goals');
@@ -55,12 +57,16 @@ function Shell() {
         <GoalsScreen
           onNewGoal={() => setOverlay({ kind: 'newGoal' })}
           onEditPermissions={() => setTab('crew')}
+          onDeleteGoal={(goal) => setOverlay({ kind: 'deleteGoal', goal })}
         />
       )}
 
       {overlay.kind === 'newGoal' && <NewGoalFlow onClose={close} />}
       {overlay.kind === 'newGrant' && <NewGrantFlow onClose={close} />}
       {overlay.kind === 'revoke' && <RevokeDialog grant={overlay.grant} onClose={close} />}
+      {overlay.kind === 'deleteGoal' && (
+        <DeleteGoalDialog goal={overlay.goal} onClose={close} />
+      )}
     </div>
   );
 }

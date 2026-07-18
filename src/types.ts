@@ -33,8 +33,12 @@ export interface Grant {
   ceiling: Level;
   /** Charges per week. */
   allowance: number;
-  /** Charges spent this week. */
+  /** Charges counted against `usedWeek` — not necessarily the current week.
+   *  Read it through `chargesUsed` in `lib/week`, never directly. */
   used: number;
+  /** Start of the week `used` was counted in, as `weekStart` returns it.
+   *  When the current week moves past this, the allowance is back. */
+  usedWeek: number;
   /** Paused grants keep their sentence but can't fire. */
   paused: boolean;
   createdAt: number;

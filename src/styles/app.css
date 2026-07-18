@@ -251,6 +251,26 @@ textarea {
   color: var(--ink);
 }
 
+.btn--sm {
+  padding: 7px 14px;
+  font-size: 13px;
+}
+
+/* Dev only — dashed so it never reads as part of the designed surface. */
+.btn--dev {
+  border: 1.5px dashed var(--hairline);
+  border-radius: 20px;
+  padding: 9px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.btn--dev:disabled {
+  color: var(--disabled);
+  border-color: var(--inactive);
+}
+
 /* ---------- modal ---------- */
 
 .scrim {
@@ -791,6 +811,13 @@ textarea {
   color: var(--muted);
 }
 
+.card__actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
 .card__byline {
   display: flex;
   align-items: center;
@@ -1005,6 +1032,13 @@ textarea {
   flex-shrink: 0;
   display: flex;
   justify-content: flex-end;
+}
+
+/* The dev zap control needs a second slot in the action lane. Widening it on
+   the section keeps the header rule and every row in the same lanes. */
+.grants--dev .lane--action {
+  width: 168px;
+  gap: 8px;
 }
 
 .grant__ceiling {

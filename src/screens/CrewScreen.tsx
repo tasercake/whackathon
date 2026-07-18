@@ -1,23 +1,46 @@
+import { useRef, useState } from 'react';
 import { Mascot, Plus, Shield } from '../components/art';
-import { useStore } from '../store/store';
-import type { Grant } from '../types';
+import { clampToCap, uid, useStore } from '../store/store';
+import { sendShock } from '../services/shockService';
+import { chargesLeft, chargesUsed } from '../lib/week';
+import type { Grant, Level } from '../types';
+
+/** The simulate-a-zap control exists so the send path can be exercised without
+ *  a device. It is not part of either designed flow and never ships. */
+const DEV = import.meta.env.DEV;
 
 function GrantRow({
   grant,
   index,
+  cap,
   onRevoke,
   onTogglePause,
+  onSimulate,
 }: {
   grant: Grant;
   index: number;
+  cap: Level;
   onRevoke: (g: Grant) => void;
   onTogglePause: (g: Grant) => void;
+  onSimulate: (g: Grant) => Promise<void>;
 }) {
+  const [sending, setSending] = useState(false);
+  // `sending` disables the button, but only after a render. Clicks landing in
+  // the same tick would all get past it and spend the same charge twice, so
+  // the gate that actually holds is this ref, set before the first await.
+  const inFlight = useRef(false);
   const avatarTone = grant.paused
     ? 'avatar--off'
     : index % 2 === 0
       ? ''
       : 'avatar--ink';
+
+  const now = Date.now();
+  const used = chargesUsed(grant, now);
+  const left = chargesLeft(grant, now);
+  // A paused grant keeps its sentence but can't fire, and a spent one waits
+  // for Monday. Both are the same "no" to the send path.
+  const canFire = !grant.paused && left > 0;
 
   return (
     <div className="grant">
@@ -42,10 +65,36 @@ function GrantRow({
         >
           {grant.paused
             ? 'Paused by you'
-            : `${grant.used} of ${grant.allowance} this week`}
+            : `${used} of ${grant.allowance} this week`}
         </button>
       </div>
       <div className="lane--action">
+        {DEV && (
+          <button
+            className="btn btn--dev"
+            disabled={!canFire || sending}
+            title={
+              grant.paused
+                ? 'Paused — this grant cannot fire'
+                : left === 0
+                  ? 'Out of charges until Monday'
+                  : `Simulate a level ${clampToCap(grant.ceiling, cap)} zap from ${grant.name}`
+            }
+            onClick={async () => {
+              if (inFlight.current) return;
+              inFlight.current = true;
+              setSending(true);
+              try {
+                await onSimulate(grant);
+              } finally {
+                inFlight.current = false;
+                setSending(false);
+              }
+            }}
+          >
+            {sending ? 'Zapping…' : 'Zap'}
+          </button>
+        )}
         <button className="btn btn--hairline" onClick={() => onRevoke(grant)}>
           Revoke
         </button>
@@ -63,6 +112,42 @@ export function CrewScreen({
 }) {
   const { state, dispatch } = useStore();
   const { grants } = state;
+  const cap = state.settings.intensityCap;
+
+  /** Dev only. Walks the real send path: clamp → service → signed record →
+   *  the `used` counter. The only stubbed part is the service body itself. */
+  async function simulate(grant: Grant) {
+    // The service clamps again, but the caller owes it a level that is already
+    // under the ceiling — a grant's own ceiling, and the user's cap above it.
+    const level = clampToCap(grant.ceiling, cap);
+    const result = await sendShock({
+      grantId: grant.id,
+      goalId: null,
+      from: grant.name,
+      level,
+      note: 'Simulated from the dev control.',
+    });
+    if (!result.ok) {
+      console.warn('[buzz] send refused:', result.refusedReason ?? 'no reason given');
+      return;
+    }
+    dispatch({
+      type: 'recordShock',
+      shock: {
+        id: uid('zap'),
+        grantId: grant.id,
+        goalId: null,
+        from: grant.name,
+        level,
+        note: 'Simulated from the dev control.',
+        // The signature comes back from the service. It's what makes the
+        // record disputable rather than just a log line.
+        signature: result.signature,
+        disputed: false,
+        at: result.at,
+      },
+    });
+  }
 
   if (grants.length === 0) {
     return (
@@ -124,7 +209,7 @@ export function CrewScreen({
         </button>
       </section>
 
-      <section className="grants">
+      <section className={`grants${DEV ? ' grants--dev' : ''}`}>
         <div className="grants__head">
           <div className="lane--avatar" />
           <div className="grants__head-key" style={{ flex: 1 }}>
@@ -143,8 +228,10 @@ export function CrewScreen({
             key={grant.id}
             grant={grant}
             index={i}
+            cap={cap}
             onRevoke={onRevoke}
             onTogglePause={(g) => dispatch({ type: 'togglePause', id: g.id })}
+            onSimulate={simulate}
           />
         ))}
       </section>
@@ -156,9 +243,11 @@ export function CrewScreen({
         <div className="footnote__text">
           <div className="footnote__title">Revoking is instant, and silent.</div>
           <p className="footnote__body">
+            {/* No inbox to dispute from yet, so this promises the signing and
+                nothing past it. Restore the dispute half when there's a UI. */}
             Nobody gets a notification when you take their switch away. No grace period,
-            no appeal, no awkward conversation. Every zap they send is signed, and you can
-            dispute any of them.
+            no appeal, no awkward conversation. Every zap they send is signed, so there’s
+            always a record of who sent what.
           </p>
         </div>
       </aside>

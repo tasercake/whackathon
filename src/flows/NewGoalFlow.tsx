@@ -101,10 +101,11 @@ export function NewGoalFlow({ onClose }: { onClose: () => void }) {
           </div>
         </div>
         <div className="modal__foot">
-          <button className="btn btn--ghost" onClick={onClose}>
-            Edit or delete — any time, no notice
-          </button>
-          <div className="modal__spacer" />
+          {/* Was a button that only closed the modal. Delete is real now and
+              lives on the goal card, so this says what's actually there. */}
+          <div className="modal__foot-note">
+            Delete it from the goal card any time. Nobody is notified.
+          </div>
           <button className="btn btn--primary" onClick={onClose}>
             Got it
             <Arrow />
